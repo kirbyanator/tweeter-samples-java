@@ -1,54 +1,49 @@
 package edu.byu.cs.tweeter.client.model.service;
 
-import edu.byu.cs.tweeter.client.model.service.backgroundTask.BackgroundTaskUtils;
+import edu.byu.cs.tweeter.client.cache.Cache;
+import edu.byu.cs.tweeter.client.model.service.backgroundTask.GetUserTask;
 import edu.byu.cs.tweeter.client.model.service.backgroundTask.LoginTask;
-import edu.byu.cs.tweeter.client.model.service.backgroundTask.handler.LoginTaskHandler;
-import edu.byu.cs.tweeter.model.domain.AuthToken;
-import edu.byu.cs.tweeter.model.domain.User;
+import edu.byu.cs.tweeter.client.model.service.backgroundTask.LogoutTask;
+import edu.byu.cs.tweeter.client.model.service.backgroundTask.RegisterTask;
+import edu.byu.cs.tweeter.client.model.service.backgroundTask.handler.AuthenticationTaskHandler;
+import edu.byu.cs.tweeter.client.model.service.backgroundTask.handler.GetUserHandler;
+import edu.byu.cs.tweeter.client.model.service.backgroundTask.handler.SimpleTaskHandler;
+import edu.byu.cs.tweeter.client.model.service.observer.interfaces.SimpleObserver;
+import edu.byu.cs.tweeter.client.model.service.observer.interfaces.UserObserver;
 
-/**
- * Contains the business logic to support the login operation.
- */
-public class UserService {
+public class UserService extends TaskExecutor{
 
-    public static final String URL_PATH = "/login";
 
-    /**
-     * An observer interface to be implemented by observers who want to be notified when
-     * asynchronous operations complete.
-     */
-    public interface LoginObserver {
-        void handleSuccess(User user, AuthToken authToken);
-        void handleFailure(String message);
-        void handleException(Exception exception);
+    public void getUser(String userAliasString, UserObserver observer){
+        GetUserTask getUserTask = new GetUserTask(Cache.getInstance().getCurrUserAuthToken(),
+                userAliasString, new GetUserHandler(observer));
+        executeTask(getUserTask);
     }
 
-    /**
-     * Creates an instance.
-     *
-     */
-     public UserService() {
-     }
 
-    /**
-     * Makes an asynchronous login request.
-     *
-     * @param username the user's name.
-     * @param password the user's password.
-     */
-    public void login(String username, String password, LoginObserver observer) {
-        LoginTask loginTask = getLoginTask(username, password, observer);
-        BackgroundTaskUtils.runTask(loginTask);
+    public void loginUser(String aliasString, String passwordString, UserObserver observer) {
+        // Send the login request.
+        LoginTask loginTask = new LoginTask(aliasString,
+                passwordString,
+                new AuthenticationTaskHandler(observer));
+        executeTask(loginTask);
     }
 
-    /**
-     * Returns an instance of {@link LoginTask}. Allows mocking of the LoginTask class for
-     * testing purposes. All usages of LoginTask should get their instance from this method to
-     * allow for proper mocking.
-     *
-     * @return the instance.
-     */
-    LoginTask getLoginTask(String username, String password, LoginObserver observer) {
-        return new LoginTask(this, username, password, new LoginTaskHandler(observer));
+
+
+    public void registerUser(String firstName, String lastName, String aliasName, String password, String imageBytesBase64
+    , UserObserver observer) {
+        RegisterTask registerTask = new RegisterTask(firstName, lastName,
+                aliasName, password, imageBytesBase64, new AuthenticationTaskHandler(observer));
+        executeTask(registerTask);
     }
+
+
+
+    public void logout(SimpleObserver observer){
+        LogoutTask logoutTask = new LogoutTask(Cache.getInstance().getCurrUserAuthToken(), new SimpleTaskHandler(observer));
+        executeTask(logoutTask);
+    }
+
+
 }
