@@ -1,7 +1,10 @@
 package edu.byu.cs.tweeter.server.service;
 
 import edu.byu.cs.tweeter.model.net.request.FollowRequest;
+import edu.byu.cs.tweeter.model.net.request.FollowersCountRequest;
+import edu.byu.cs.tweeter.model.net.request.FollowingCountRequest;
 import edu.byu.cs.tweeter.model.net.request.FollowingRequest;
+import edu.byu.cs.tweeter.model.net.response.CountResponse;
 import edu.byu.cs.tweeter.model.net.response.FollowResponse;
 import edu.byu.cs.tweeter.model.net.response.FollowingResponse;
 import edu.byu.cs.tweeter.server.dao.FollowDAO;
@@ -42,5 +45,13 @@ public class FollowService {
      */
     FollowDAO getFollowingDAO() {
         return new FollowDAO();
+    }
+
+    public CountResponse getFollowerCount(FollowersCountRequest input) {
+        return new CountResponse(20);
+    }
+
+    public CountResponse getFollowingCount(FollowingCountRequest input) {
+        return new CountResponse(20);
     }
 }

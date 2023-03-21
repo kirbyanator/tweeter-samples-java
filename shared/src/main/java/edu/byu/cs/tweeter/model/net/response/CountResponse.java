@@ -1,11 +1,6 @@
 package edu.byu.cs.tweeter.model.net.response;
 
-import edu.byu.cs.tweeter.model.net.request.FollowersCountRequest;
-
-/**
- * A response for a {@link FollowersCountRequest}.
- */
-public class FollowersCountResponse extends Response {
+public class CountResponse extends Response{
 
     private int count;
 
@@ -14,7 +9,7 @@ public class FollowersCountResponse extends Response {
      *
      * @param message a message describing why the request was unsuccessful.
      */
-    public FollowersCountResponse(String message) {
+    public CountResponse(String message) {
         super(false, message);
         this.count = 0;
     }
@@ -22,7 +17,7 @@ public class FollowersCountResponse extends Response {
     /**
      * Creates a response indicating that the corresponding request was successful.
      */
-    public FollowersCountResponse(int count) {
+    public CountResponse(int count) {
         super(true, null);
         this.count = count;
     }
