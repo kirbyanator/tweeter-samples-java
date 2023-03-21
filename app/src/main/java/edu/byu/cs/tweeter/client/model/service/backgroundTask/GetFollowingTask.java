@@ -43,7 +43,7 @@ public class GetFollowingTask extends PagedUserTask {
             else {
                 sendFailedMessage(response.getMessage());
             }
-        } catch (IOException | TweeterRemoteException ex) {
+        } catch (Exception ex) {
             Log.e(LOG_TAG, "Failed to get followees", ex);
             sendExceptionMessage(ex);
         }
