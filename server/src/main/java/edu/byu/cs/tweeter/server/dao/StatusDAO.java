@@ -5,7 +5,9 @@ import java.util.List;
 
 import edu.byu.cs.tweeter.model.domain.Status;
 import edu.byu.cs.tweeter.model.net.request.FeedRequest;
+import edu.byu.cs.tweeter.model.net.request.StoryRequest;
 import edu.byu.cs.tweeter.model.net.response.FeedResponse;
+import edu.byu.cs.tweeter.model.net.response.StoryResponse;
 import edu.byu.cs.tweeter.util.FakeData;
 
 public class StatusDAO {
@@ -57,5 +59,29 @@ public class StatusDAO {
             }
         }
         return statusIndex;
+    }
+
+    public StoryResponse getStory(StoryRequest request) {
+        assert request.getLimit() > 0;
+        assert request.getUserAlias() != null;
+
+        List<Status> allStatus = getDummyStatus();
+        List<Status> responseStatuses = new ArrayList<>(request.getLimit());
+
+        boolean hasMorePages = false;
+
+        if(request.getLimit() > 0) {
+            if (allStatus != null) {
+                int statusIndex = getStatusStartingIndex(request.getLastStatus(), allStatus);
+
+                for(int limitCounter = 0; statusIndex < allStatus.size() && limitCounter < request.getLimit(); statusIndex++, limitCounter++) {
+                    responseStatuses.add(allStatus.get(statusIndex));
+                }
+
+                hasMorePages = statusIndex < allStatus.size();
+            }
+        }
+
+        return new StoryResponse(responseStatuses, hasMorePages);
     }
 }

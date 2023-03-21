@@ -1,6 +1,7 @@
 package edu.byu.cs.tweeter.model.net.request;
 
 import edu.byu.cs.tweeter.model.domain.AuthToken;
+import edu.byu.cs.tweeter.model.domain.Status;
 
 /**
  * Contains all the information needed to make a request to have the server return the next page of
@@ -11,7 +12,7 @@ public class StoryRequest {
     private AuthToken authToken;
     private String userAlias;
     private int limit;
-    private String lastItemAlias;
+    private Status lastItemAlias;
 
     /**
      * Allows construction of the object from Json. Private so it won't be called in normal code.
@@ -27,7 +28,7 @@ public class StoryRequest {
      *                     there was no previous request or if no followees were returned in the
      *                     previous request).
      */
-    public StoryRequest(AuthToken authToken, String userAlias, int limit, String lastItemAlias) {
+    public StoryRequest(AuthToken authToken, String userAlias, int limit, Status lastItemAlias) {
         this.authToken = authToken;
         this.userAlias = userAlias;
         this.limit = limit;
@@ -78,11 +79,11 @@ public class StoryRequest {
         this.userAlias = userAlias;
     }
 
-    public String getLastItemAlias() {
+    public Status getLastStatus() {
         return lastItemAlias;
     }
 
-    public void setLastItemAlias(String lastItemAlias) {
+    public void setLastItemAlias(Status lastItemAlias) {
         this.lastItemAlias = lastItemAlias;
     }
 }
