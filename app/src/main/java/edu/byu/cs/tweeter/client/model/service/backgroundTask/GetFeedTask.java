@@ -34,9 +34,11 @@ public class GetFeedTask extends PagedStatusTask {
         Status lastStatus = getLastItem() == null ? null:getLastItem();
 
         try {
+            System.out.println("Pinging getfeed api");
             FeedRequest request = new FeedRequest(authToken, targetUserAlias, getLimit(), lastStatus);
             FeedResponse response = getServerFacade().getFeed(request, URL_PATH);
             if(response.isSuccess()){
+                System.out.println("getfeed api ping success!");
                 return new Pair<>(response.getItems(),response.getHasMorePages());
             }
             else{
@@ -44,9 +46,10 @@ public class GetFeedTask extends PagedStatusTask {
             }
         }
         catch(Exception ex){
+            Log.e(LOG_TAG, "Failed to get feed", ex);
             sendExceptionMessage(ex);
         }
 
-        return getFakeData().getPageOfStatus(getLastItem(), getLimit());
+        return null;
     }
 }

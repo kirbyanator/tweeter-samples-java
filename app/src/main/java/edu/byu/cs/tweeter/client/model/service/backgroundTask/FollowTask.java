@@ -31,10 +31,12 @@ public class FollowTask extends AuthenticatedTask {
 
         // Call sendSuccessMessage if successful
         try {
+            System.out.println("pinging follow api");
             FollowRequest request = new FollowRequest(authToken, followee.getAlias());
             FollowResponse response = getServerFacade().follow(request, URL_PATH);
 
             if(response.isSuccess()) {
+                System.out.println("follow api ping success!");
                 sendSuccessMessage();
             }
             else {
