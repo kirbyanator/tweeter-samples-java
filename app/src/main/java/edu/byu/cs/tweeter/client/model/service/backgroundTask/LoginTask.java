@@ -2,8 +2,14 @@ package edu.byu.cs.tweeter.client.model.service.backgroundTask;
 
 import android.os.Handler;
 
+import java.io.IOException;
+
+import edu.byu.cs.tweeter.client.model.service.UserService;
 import edu.byu.cs.tweeter.model.domain.AuthToken;
 import edu.byu.cs.tweeter.model.domain.User;
+import edu.byu.cs.tweeter.model.net.TweeterRemoteException;
+import edu.byu.cs.tweeter.model.net.request.LoginRequest;
+import edu.byu.cs.tweeter.model.net.response.LoginResponse;
 import edu.byu.cs.tweeter.util.Pair;
 
 /**
@@ -11,14 +17,33 @@ import edu.byu.cs.tweeter.util.Pair;
  */
 public class LoginTask extends AuthenticateTask {
 
+    private static final String LOG_TAG = "LoginTask";
+    private static final String URL_PATH = "/login";
+
     public LoginTask(String username, String password, Handler messageHandler) {
         super(messageHandler, username, password);
     }
 
     @Override
-    protected Pair<User, AuthToken> runAuthenticationTask() {
-        User loggedInUser = getFakeData().getFirstUser();
-        AuthToken authToken = getFakeData().getAuthToken();
-        return new Pair<>(loggedInUser, authToken);
+    protected Pair<User, AuthToken> runAuthenticationTask() throws IOException, TweeterRemoteException {
+
+        try {
+            System.out.println("pinging login api");
+            LoginRequest request = new LoginRequest(username, password);
+            LoginResponse response = getServerFacade().login(request, URL_PATH);
+            if(response.isSuccess()){
+                System.out.println("login api success!");
+                User loggedInUser = response.getUser();
+                AuthToken authToken = response.getAuthToken();
+                return new Pair<>(loggedInUser, authToken);
+            }
+            else{
+                sendFailedMessage(response.getMessage());
+            }
+        }
+        catch(Exception ex){
+            sendExceptionMessage(ex);
+        }
+        return null;
     }
 }
