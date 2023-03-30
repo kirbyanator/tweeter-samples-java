@@ -11,6 +11,9 @@ import edu.byu.cs.tweeter.util.Pair;
  */
 public class RegisterTask extends AuthenticateTask {
 
+    private static final String LOG_TAG = "RegisterTask";
+    private static final String URL_PATH = "/register";
+
     /**
      * The user's first name.
      */
