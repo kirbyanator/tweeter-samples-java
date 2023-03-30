@@ -8,11 +8,13 @@ import edu.byu.cs.tweeter.model.net.request.FollowersRequest;
 import edu.byu.cs.tweeter.model.net.request.FollowingCountRequest;
 import edu.byu.cs.tweeter.model.net.request.FollowingRequest;
 import edu.byu.cs.tweeter.model.net.request.IsFollowerRequest;
+import edu.byu.cs.tweeter.model.net.request.UnfollowRequest;
 import edu.byu.cs.tweeter.model.net.response.CountResponse;
 import edu.byu.cs.tweeter.model.net.response.FollowResponse;
 import edu.byu.cs.tweeter.model.net.response.FollowersResponse;
 import edu.byu.cs.tweeter.model.net.response.FollowingResponse;
 import edu.byu.cs.tweeter.model.net.response.IsFollowerResponse;
+import edu.byu.cs.tweeter.model.net.response.UnfollowResponse;
 import edu.byu.cs.tweeter.server.dao.FollowDAO;
 
 /**
@@ -72,5 +74,9 @@ public class FollowService {
 
     public IsFollowerResponse isFollower(IsFollowerRequest input) {
         return new IsFollowerResponse(new Random().nextInt() > 0);
+    }
+
+    public UnfollowResponse unfollow(UnfollowRequest input) {
+        return new UnfollowResponse();
     }
 }
