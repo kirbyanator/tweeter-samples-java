@@ -70,6 +70,21 @@ public class UserService {
     }
 
     public RegisterResponse register(RegisterRequest input) {
+        if(input.getUsername() == null){
+            throw new RuntimeException("[Bad Request] Request needs to have a username");
+        }
+        if(input.getPassword() == null){
+            throw new RuntimeException("[Bad Request] Request needs to have a password");
+        }
+        if(input.getFirstName() == null){
+            throw new RuntimeException("[Bad Request] Request needs to have a first name");
+        }
+        if(input.getLastName() == null){
+            throw new RuntimeException("[Bad Request] Request needs to have a last name");
+        }
+        if(input.getImage() == null){
+            throw new RuntimeException("[Bad Request] Request needs to have an image");
+        }
         User registeredUser = getFakeData().getFirstUser();
         AuthToken authToken = getFakeData().getAuthToken();
         return new RegisterResponse(registeredUser, authToken);

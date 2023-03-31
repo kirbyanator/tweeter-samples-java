@@ -10,6 +10,12 @@ import edu.byu.cs.tweeter.server.dao.StatusDAO;
 
 public class StatusService {
     public FeedResponse getFeed(FeedRequest request){
+        if(request.getUserAlias() == null){
+            throw new RuntimeException("[Bad Request] Request needs to have a target alias");
+        }
+        if(request.getLimit() <= 0){
+            throw new RuntimeException("[Bad Request] Request needs to have a positive limit");
+        }
         return getStatusDAO().getFeed(request);
     }
 
@@ -18,10 +24,19 @@ public class StatusService {
     }
 
     public StoryResponse getStory(StoryRequest request) {
+        if(request.getUserAlias() == null){
+            throw new RuntimeException("[Bad Request] Request needs to have a target alias");
+        }
+        if(request.getLimit() <= 0){
+            throw new RuntimeException("[Bad Request] Request needs to have a positive limit");
+        }
         return getStatusDAO().getStory(request);
     }
 
     public PostStatusResponse postStatus(PostStatusRequest input) {
+        if(input.getStatus() == null){
+            throw new RuntimeException("[Bad Request] Request needs to have a status");
+        }
         return new PostStatusResponse();
     }
 }

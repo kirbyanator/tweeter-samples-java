@@ -41,6 +41,9 @@ public class FollowService {
     }
 
     public FollowResponse follow(FollowRequest request){
+        if(request.getFolloweeAlias() == null){
+            throw new RuntimeException("[Bad Request] Request needs to have a followee alias");
+        }
         return new FollowResponse();
     }
 
@@ -56,10 +59,16 @@ public class FollowService {
     }
 
     public CountResponse getFollowerCount(FollowersCountRequest input) {
+        if(input.getTargetUserAlias() == null){
+            throw new RuntimeException("[Bad Request] Request needs a user alias");
+        }
         return new CountResponse(20);
     }
 
     public CountResponse getFollowingCount(FollowingCountRequest input) {
+        if(input.getTargetUserAlias() == null){
+            throw new RuntimeException("[Bad Request] Request needs a user alias");
+        }
         return new CountResponse(20);
     }
 
@@ -73,10 +82,19 @@ public class FollowService {
     }
 
     public IsFollowerResponse isFollower(IsFollowerRequest input) {
+        if(input.getFolloweeAlias() == null){
+            throw new RuntimeException("[Bad Request] Request needs to have a followee alias");
+        }
+        if(input.getFollowerAlias() == null){
+            throw new RuntimeException("[Bad Request] Request needs to have a follower alias");
+        }
         return new IsFollowerResponse(new Random().nextInt() > 0);
     }
 
     public UnfollowResponse unfollow(UnfollowRequest input) {
+        if(input.getFolloweeAlias() == null){
+            throw new RuntimeException("[Bad Request] Request needs to have a followee alias");
+        }
         return new UnfollowResponse();
     }
 }
