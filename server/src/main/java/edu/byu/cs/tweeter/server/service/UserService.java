@@ -1,5 +1,10 @@
 package edu.byu.cs.tweeter.server.service;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.util.Base64;
+
 import edu.byu.cs.tweeter.model.domain.AuthToken;
 import edu.byu.cs.tweeter.model.domain.User;
 import edu.byu.cs.tweeter.model.net.request.LoginRequest;
@@ -10,9 +15,18 @@ import edu.byu.cs.tweeter.model.net.response.LoginResponse;
 import edu.byu.cs.tweeter.model.net.response.LogoutResponse;
 import edu.byu.cs.tweeter.model.net.response.RegisterResponse;
 import edu.byu.cs.tweeter.model.net.response.UserResponse;
+import edu.byu.cs.tweeter.server.dao.AuthTokenDAO;
+import edu.byu.cs.tweeter.server.dao.DAOFactory;
+import edu.byu.cs.tweeter.server.dao.UserDAO;
+import edu.byu.cs.tweeter.server.dao.beans.AuthTokenBean;
+import edu.byu.cs.tweeter.server.dao.beans.UserBean;
 import edu.byu.cs.tweeter.util.FakeData;
 
 public class UserService {
+
+    private final DAOFactory factory = new DAOFactory();
+    private static final SecureRandom secureRandom = new SecureRandom();
+    private static final Base64.Encoder base64Encoder = Base64.getUrlEncoder();
 
     public LoginResponse login(LoginRequest request) {
         if(request.getUsername() == null){
@@ -22,9 +36,37 @@ public class UserService {
         }
 
         // TODO: Generates dummy data. Replace with a real implementation.
-        User user = getDummyUser();
-        AuthToken authToken = getDummyAuthToken();
-        return new LoginResponse(user, authToken);
+
+        try{
+            UserDAO userDAO = factory.getUserDAO();
+            AuthTokenDAO authTokenDAO = factory.getAuthTokenDAO();
+
+            //check password
+            UserBean retrievedUser = userDAO.get(request.getUsername());
+            String correctPassword = retrievedUser.getPassword();
+            String enteredPassword = hashPassword(request.getPassword());
+
+            if(correctPassword.equals(enteredPassword)){
+                System.out.println("yay! password correct");
+                User user = new User(retrievedUser.getFirstName(), retrievedUser.getLastName(), retrievedUser.getAlias(), retrievedUser.getImageUrl());
+                AuthToken authToken = new AuthToken(generateNewToken(),System.currentTimeMillis());
+                AuthTokenBean tokenEntry = new AuthTokenBean(request.getUsername(),authToken.token ,authToken.getTimestamp());
+                authTokenDAO.put(tokenEntry);
+
+                return new LoginResponse(user, authToken);
+            }
+            else{
+                return new LoginResponse("Incorrect password");
+            }
+
+        }
+        catch(Exception e){
+            return new LoginResponse(e.getMessage());
+        }
+
+//        User user = getDummyUser();
+//        AuthToken authToken = getDummyAuthToken();
+
     }
 
     /**
@@ -65,28 +107,74 @@ public class UserService {
         return new UserResponse(user);
     }
 
-    public LogoutResponse logout(LogoutRequest input) {
+    public LogoutResponse logout(LogoutRequest request) {
         return new LogoutResponse();
     }
 
-    public RegisterResponse register(RegisterRequest input) {
-        if(input.getUsername() == null){
+    public RegisterResponse register(RegisterRequest request) {
+        if(request.getUsername() == null){
             throw new RuntimeException("[Bad Request] Request needs to have a username");
         }
-        if(input.getPassword() == null){
+        if(request.getPassword() == null){
             throw new RuntimeException("[Bad Request] Request needs to have a password");
         }
-        if(input.getFirstName() == null){
+        if(request.getFirstName() == null){
             throw new RuntimeException("[Bad Request] Request needs to have a first name");
         }
-        if(input.getLastName() == null){
+        if(request.getLastName() == null){
             throw new RuntimeException("[Bad Request] Request needs to have a last name");
         }
-        if(input.getImage() == null){
+        if(request.getImage() == null){
             throw new RuntimeException("[Bad Request] Request needs to have an image");
         }
-        User registeredUser = getFakeData().getFirstUser();
-        AuthToken authToken = getFakeData().getAuthToken();
-        return new RegisterResponse(registeredUser, authToken);
+
+        UserDAO userDAO = factory.getUserDAO();
+        AuthTokenDAO authDAO = factory.getAuthTokenDAO();
+
+        String hashedPassword = hashPassword(request.getPassword());
+
+
+        try{
+            String imageLink = userDAO.uploadImage(request.getImage(), request.getUsername());
+
+            UserBean userEntry = new UserBean(request.getFirstName(), request.getLastName(), request.getUsername(), imageLink, hashedPassword, 0, 0);
+            User registeredUser = new User(request.getFirstName(), request.getLastName(), request.getUsername(), imageLink);
+            AuthToken authToken = new AuthToken(generateNewToken(),System.currentTimeMillis());
+
+            userDAO.put(userEntry);
+            AuthTokenBean tokenEntry = new AuthTokenBean(request.getUsername(),authToken.token ,authToken.getTimestamp());
+            authDAO.put(tokenEntry);
+            return new RegisterResponse(registeredUser, authToken);
+        }
+        catch(Exception e){
+            System.out.println(e.getMessage());
+            return new RegisterResponse(e.getMessage());
+        }
+
+        //User registeredUser = getFakeData().getFirstUser();
+        //AuthToken authToken = getFakeData().getAuthToken();
+
+    }
+
+    private static String generateNewToken() {
+        byte[] randomBytes = new byte[24];
+        secureRandom.nextBytes(randomBytes);
+        return base64Encoder.encodeToString(randomBytes);
+    }
+
+    private static String hashPassword(String passwordToHash) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            md.update(passwordToHash.getBytes());
+            byte[] bytes = md.digest();
+            StringBuilder sb = new StringBuilder();
+            for (byte aByte : bytes) {
+                sb.append(Integer.toString((aByte & 0xff) + 0x100, 16).substring(1));
+            }
+            return sb.toString();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        return "FAILED TO HASH";
     }
 }
