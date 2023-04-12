@@ -56,6 +56,10 @@ public class UserDAO extends BaseDAO implements DAOInterface<UserBean> {
         return entry;
     }
 
+    @Override
+    public void remove(String key) {
+
+    }
 
 
 }

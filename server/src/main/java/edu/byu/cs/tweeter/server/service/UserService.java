@@ -109,6 +109,14 @@ public class UserService {
     }
 
     public LogoutResponse logout(LogoutRequest request) {
+        try{
+            AuthTokenDAO authTokenDAO = factory.getAuthTokenDAO();
+            AuthToken oldToken = request.getAuthToken();
+            authTokenDAO.remove(oldToken.getToken());
+        }
+        catch(Exception e){
+            return new LogoutResponse(e.getMessage());
+        }
         return new LogoutResponse();
     }
 
