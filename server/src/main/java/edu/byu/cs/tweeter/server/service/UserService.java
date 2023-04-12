@@ -11,9 +11,8 @@ import edu.byu.cs.tweeter.model.net.request.LoginRequest;
 import edu.byu.cs.tweeter.model.net.request.LogoutRequest;
 import edu.byu.cs.tweeter.model.net.request.RegisterRequest;
 import edu.byu.cs.tweeter.model.net.request.UserRequest;
-import edu.byu.cs.tweeter.model.net.response.LoginResponse;
 import edu.byu.cs.tweeter.model.net.response.LogoutResponse;
-import edu.byu.cs.tweeter.model.net.response.RegisterResponse;
+import edu.byu.cs.tweeter.model.net.response.AuthenticationResponse;
 import edu.byu.cs.tweeter.model.net.response.UserResponse;
 import edu.byu.cs.tweeter.server.dao.AuthTokenDAO;
 import edu.byu.cs.tweeter.server.dao.DAOFactory;
@@ -28,7 +27,7 @@ public class UserService {
     private static final SecureRandom secureRandom = new SecureRandom();
     private static final Base64.Encoder base64Encoder = Base64.getUrlEncoder();
 
-    public LoginResponse login(LoginRequest request) {
+    public AuthenticationResponse login(LoginRequest request) {
         if(request.getUsername() == null){
             throw new RuntimeException("[Bad Request] Missing a username");
         } else if(request.getPassword() == null) {
@@ -53,15 +52,15 @@ public class UserService {
                 AuthTokenBean tokenEntry = new AuthTokenBean(request.getUsername(),authToken.token ,authToken.getTimestamp());
                 authTokenDAO.put(tokenEntry);
 
-                return new LoginResponse(user, authToken);
+                return new AuthenticationResponse(user, authToken);
             }
             else{
-                return new LoginResponse("Incorrect password");
+                return new AuthenticationResponse("Incorrect password");
             }
 
         }
         catch(Exception e){
-            return new LoginResponse(e.getMessage());
+            return new AuthenticationResponse(e.getMessage());
         }
 
 //        User user = getDummyUser();
@@ -111,7 +110,7 @@ public class UserService {
         return new LogoutResponse();
     }
 
-    public RegisterResponse register(RegisterRequest request) {
+    public AuthenticationResponse register(RegisterRequest request) {
         if(request.getUsername() == null){
             throw new RuntimeException("[Bad Request] Request needs to have a username");
         }
@@ -144,11 +143,11 @@ public class UserService {
             userDAO.put(userEntry);
             AuthTokenBean tokenEntry = new AuthTokenBean(request.getUsername(),authToken.token ,authToken.getTimestamp());
             authDAO.put(tokenEntry);
-            return new RegisterResponse(registeredUser, authToken);
+            return new AuthenticationResponse(registeredUser, authToken);
         }
         catch(Exception e){
             System.out.println(e.getMessage());
-            return new RegisterResponse(e.getMessage());
+            return new AuthenticationResponse(e.getMessage());
         }
 
         //User registeredUser = getFakeData().getFirstUser();

@@ -4,12 +4,11 @@ import android.os.Handler;
 
 import java.io.IOException;
 
-import edu.byu.cs.tweeter.client.model.service.UserService;
 import edu.byu.cs.tweeter.model.domain.AuthToken;
 import edu.byu.cs.tweeter.model.domain.User;
 import edu.byu.cs.tweeter.model.net.TweeterRemoteException;
 import edu.byu.cs.tweeter.model.net.request.LoginRequest;
-import edu.byu.cs.tweeter.model.net.response.LoginResponse;
+import edu.byu.cs.tweeter.model.net.response.AuthenticationResponse;
 import edu.byu.cs.tweeter.util.Pair;
 
 /**
@@ -25,25 +24,29 @@ public class LoginTask extends AuthenticateTask {
     }
 
     @Override
-    protected Pair<User, AuthToken> runAuthenticationTask() throws IOException, TweeterRemoteException {
+    protected AuthenticationResponse runAuthenticationTask() throws IOException, TweeterRemoteException {
 
-        try {
-            System.out.println("pinging login api");
-            LoginRequest request = new LoginRequest(username, password);
-            LoginResponse response = getServerFacade().login(request, URL_PATH);
-            if(response.isSuccess()){
-                System.out.println("login api success!");
-                User loggedInUser = response.getUser();
-                AuthToken authToken = response.getAuthToken();
-                return new Pair<>(loggedInUser, authToken);
-            }
-            else{
-                sendFailedMessage(response.getMessage());
-            }
-        }
-        catch(Exception ex){
-            sendExceptionMessage(ex);
-        }
-        return null;
+        LoginRequest request = new LoginRequest(username, password);
+        AuthenticationResponse response = getServerFacade().login(request, URL_PATH);
+        return response;
+
+//        try {
+//            System.out.println("pinging login api");
+//            LoginRequest request = new LoginRequest(username, password);
+//            AuthenticationResponse response = getServerFacade().login(request, URL_PATH);
+//            if(response.isSuccess()){
+//                System.out.println("login api success!");
+//                User loggedInUser = response.getUser();
+//                AuthToken authToken = response.getAuthToken();
+//                return new Pair<>(loggedInUser, authToken);
+//            }
+//            else{
+//                sendFailedMessage(response.getMessage());
+//            }
+//        }
+//        catch(Exception ex){
+//            sendExceptionMessage(ex);
+//        }
+//        return null;
     }
 }

@@ -8,7 +8,7 @@ import edu.byu.cs.tweeter.client.model.net.ServerFacade;
 import edu.byu.cs.tweeter.model.net.request.FollowersCountRequest;
 import edu.byu.cs.tweeter.model.net.request.FollowersRequest;
 import edu.byu.cs.tweeter.model.net.request.RegisterRequest;
-import edu.byu.cs.tweeter.model.net.response.RegisterResponse;
+import edu.byu.cs.tweeter.model.net.response.AuthenticationResponse;
 import edu.byu.cs.tweeter.model.net.response.CountResponse;
 import edu.byu.cs.tweeter.model.net.response.FollowersResponse;
 
@@ -25,7 +25,7 @@ public class ServerFacadeTest {
     public void registerTest(){
         try {
             RegisterRequest request = new RegisterRequest("@allen", "bangus", "first", "last", "animage");
-            RegisterResponse response = serverFacade.register(request, "/register");
+            AuthenticationResponse response = serverFacade.register(request, "/register");
             assert response.isSuccess();
             Assertions.assertEquals(response.getUser().getAlias(), request.getUsername());
         }

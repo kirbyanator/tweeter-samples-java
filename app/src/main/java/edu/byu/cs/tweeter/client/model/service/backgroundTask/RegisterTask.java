@@ -2,10 +2,13 @@ package edu.byu.cs.tweeter.client.model.service.backgroundTask;
 
 import android.os.Handler;
 
+import java.io.IOException;
+
 import edu.byu.cs.tweeter.model.domain.AuthToken;
 import edu.byu.cs.tweeter.model.domain.User;
+import edu.byu.cs.tweeter.model.net.TweeterRemoteException;
 import edu.byu.cs.tweeter.model.net.request.RegisterRequest;
-import edu.byu.cs.tweeter.model.net.response.RegisterResponse;
+import edu.byu.cs.tweeter.model.net.response.AuthenticationResponse;
 import edu.byu.cs.tweeter.util.Pair;
 
 /**
@@ -40,21 +43,24 @@ public class RegisterTask extends AuthenticateTask {
     }
 
     @Override
-    protected Pair<User, AuthToken> runAuthenticationTask() {
-        try{
-            RegisterRequest request = new RegisterRequest(username, password, firstName, lastName, image);
-            RegisterResponse response = getServerFacade().register(request, URL_PATH);
-            if(response.isSuccess()){
-                return new Pair<>(response.getUser(), response.getAuthToken());
-            }
-            else{
-                sendFailedMessage(response.getMessage());
-            }
-        }
-        catch(Exception ex){
-            sendExceptionMessage(ex);
-        }
-        return null;
+    protected AuthenticationResponse runAuthenticationTask() throws IOException, TweeterRemoteException {
+        RegisterRequest request = new RegisterRequest(username, password, firstName, lastName, image);
+        AuthenticationResponse response = getServerFacade().register(request, URL_PATH);
+        return response;
+//        try{
+//            RegisterRequest request = new RegisterRequest(username, password, firstName, lastName, image);
+//            AuthenticationResponse response = getServerFacade().register(request, URL_PATH);
+//            if(response.isSuccess()){
+//                return new Pair<>(response.getUser(), response.getAuthToken());
+//            }
+//            else{
+//                sendFailedMessage(response.getMessage());
+//            }
+//        }
+//        catch(Exception ex){
+//            sendExceptionMessage(ex);
+//        }
+//        return null;
         // return new Pair<>(registeredUser, authToken);
     }
 }

@@ -8,6 +8,7 @@ import java.io.IOException;
 import edu.byu.cs.tweeter.model.domain.AuthToken;
 import edu.byu.cs.tweeter.model.domain.User;
 import edu.byu.cs.tweeter.model.net.TweeterRemoteException;
+import edu.byu.cs.tweeter.model.net.response.AuthenticationResponse;
 import edu.byu.cs.tweeter.util.Pair;
 
 public abstract class AuthenticateTask extends BackgroundTask {
@@ -38,18 +39,30 @@ public abstract class AuthenticateTask extends BackgroundTask {
 
     @Override
     protected final void runTask() throws IOException, TweeterRemoteException {
-        Pair<User, AuthToken> loginResult = runAuthenticationTask();
+        try {
+            AuthenticationResponse response = runAuthenticationTask();
+            if(response.isSuccess()){
+                authenticatedUser = response.getUser();
+                authToken = response.getAuthToken();
+                sendSuccessMessage();
+            }
+            else{
+                sendFailedMessage(response.getMessage());
+            }
+        }
+        catch(Exception e){
+            sendExceptionMessage(e);
+        }
 
-        authenticatedUser = loginResult.getFirst();
-        authToken = loginResult.getSecond();
+
 
         // Call sendSuccessMessage if successful
-        sendSuccessMessage();
+        // sendSuccessMessage();
         // or call sendFailedMessage if not successful
         // sendFailedMessage()
     }
 
-    protected abstract Pair<User, AuthToken> runAuthenticationTask() throws IOException, TweeterRemoteException;
+    protected abstract AuthenticationResponse runAuthenticationTask() throws IOException, TweeterRemoteException;
 
     @Override
     protected void loadSuccessBundle(Bundle msgBundle) {
