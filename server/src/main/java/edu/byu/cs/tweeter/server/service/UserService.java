@@ -43,33 +43,25 @@ public class UserService {
             //check password
             UserBean retrievedUser = userDAO.get(request.getUsername());
             if(retrievedUser == null){
-                System.out.println("AAAAAAAAAAH I FARTED");
                 return new AuthenticationResponse("Invalid user/incorrect password");
             }
             String correctPassword = retrievedUser.getPassword();
             String enteredPassword = hashPassword(request.getPassword());
 
-            System.out.println("comparing " + enteredPassword + " to " + correctPassword);
-
             if(correctPassword.equals(enteredPassword)){
-                System.out.println("yay! password correct");
                 User user = new User(retrievedUser.getFirstName(), retrievedUser.getLastName(), retrievedUser.getAlias(), retrievedUser.getImageUrl());
                 AuthToken authToken = new AuthToken(generateNewToken(),System.currentTimeMillis());
                 AuthTokenBean tokenEntry = new AuthTokenBean(request.getUsername(),authToken.token ,authToken.getTimestamp());
                 authTokenDAO.put(tokenEntry);
 
-                System.out.println("success response");
                 return new AuthenticationResponse(user, authToken);
             }
             else{
-                System.out.println("bad password response");
                 return new AuthenticationResponse("Invalid user/incorrect password");
             }
 
         }
         catch(Exception e){
-            System.out.println("exception response");
-            System.out.println(e);
             return new AuthenticationResponse(e.getMessage());
         }
 
@@ -156,7 +148,6 @@ public class UserService {
             return new AuthenticationResponse(registeredUser, authToken);
         }
         catch(Exception e){
-            System.out.println(e.getMessage());
             return new AuthenticationResponse(e.getMessage());
         }
 

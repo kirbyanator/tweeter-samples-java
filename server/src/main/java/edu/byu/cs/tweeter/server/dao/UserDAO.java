@@ -42,7 +42,6 @@ public class UserDAO extends BaseDAO implements DAOInterface<UserBean> {
 
     @Override
     public void put(UserBean item){
-        System.out.println("putting user");
         DynamoDbTable<UserBean> table = getEnhancedClient().table(TableName, TableSchema.fromBean(UserBean.class));
         table.putItem(item);
     }
