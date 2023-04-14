@@ -4,4 +4,5 @@ public interface DAOInterface<T> {
     void put(T item);
     T get(String key);
     void remove(String key);
+    void update(T item);
 }

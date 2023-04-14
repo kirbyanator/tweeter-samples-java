@@ -20,7 +20,7 @@ import edu.byu.cs.tweeter.server.dao.FollowDAO;
 /**
  * Contains the business logic for getting the users a user is following.
  */
-public class FollowService {
+public class FollowService extends Service{
 
     /**
      * Returns the users that the user specified in the request is following. Uses information in

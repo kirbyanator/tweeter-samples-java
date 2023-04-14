@@ -35,4 +35,10 @@ public class AuthTokenDAO extends BaseDAO implements DAOInterface<AuthTokenBean>
                 .build();
         table.deleteItem(tablekey);
     }
+
+    @Override
+    public void update(AuthTokenBean item) {
+        DynamoDbTable<AuthTokenBean> table = getEnhancedClient().table(TableName, TableSchema.fromBean(AuthTokenBean.class));
+        table.putItem(item);
+    }
 }

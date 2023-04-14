@@ -21,11 +21,7 @@ import edu.byu.cs.tweeter.server.dao.beans.AuthTokenBean;
 import edu.byu.cs.tweeter.server.dao.beans.UserBean;
 import edu.byu.cs.tweeter.util.FakeData;
 
-public class UserService {
-
-    private final DAOFactory factory = new DAOFactory();
-    private static final SecureRandom secureRandom = new SecureRandom();
-    private static final Base64.Encoder base64Encoder = Base64.getUrlEncoder();
+public class UserService extends Service{
 
     public AuthenticationResponse login(LoginRequest request) {
         if(request.getUsername() == null){
@@ -70,42 +66,23 @@ public class UserService {
 
     }
 
-    /**
-     * Returns the dummy user to be returned by the login operation.
-     * This is written as a separate method to allow mocking of the dummy user.
-     *
-     * @return a dummy user.
-     */
-    User getDummyUser() {
-        return getFakeData().getFirstUser();
-    }
-
-    /**
-     * Returns the dummy auth token to be returned by the login operation.
-     * This is written as a separate method to allow mocking of the dummy auth token.
-     *
-     * @return a dummy auth token.
-     */
-    AuthToken getDummyAuthToken() {
-        return getFakeData().getAuthToken();
-    }
-
-    /**
-     * Returns the {@link FakeData} object used to generate dummy users and auth tokens.
-     * This is written as a separate method to allow mocking of the {@link FakeData}.
-     *
-     * @return a {@link FakeData} instance.
-     */
-    FakeData getFakeData() {
-        return FakeData.getInstance();
-    }
 
     public UserResponse getUser(UserRequest request) {
         if(request.getUserAliasStr() == null){
             throw new RuntimeException("[Bad Request] Missing user alias");
         }
-        User user = getFakeData().findUserByAlias(request.getUserAliasStr());
-        return new UserResponse(user);
+        //User user = getFakeData().findUserByAlias(request.getUserAliasStr());
+        UserDAO userDAO = factory.getUserDAO();
+        authenticateToken(request.getAuthToken());
+        try {
+            UserBean userEntry = userDAO.get(request.getUserAliasStr());
+            User user = new User(userEntry.getFirstName(), userEntry.getLastName(), userEntry.getAlias(), userEntry.getImageUrl());
+            return new UserResponse(user);
+        }
+        catch(Exception e){
+            return new UserResponse(e.getMessage());
+        }
+
     }
 
     public LogoutResponse logout(LogoutRequest request) {
@@ -164,7 +141,7 @@ public class UserService {
 
     }
 
-    private static String generateNewToken() {
+    public static String generateNewToken() {
         byte[] randomBytes = new byte[24];
         secureRandom.nextBytes(randomBytes);
         return base64Encoder.encodeToString(randomBytes);

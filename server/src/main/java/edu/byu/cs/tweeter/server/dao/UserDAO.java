@@ -61,5 +61,10 @@ public class UserDAO extends BaseDAO implements DAOInterface<UserBean> {
 
     }
 
+    @Override
+    public void update(UserBean item) {
+
+    }
+
 
 }
