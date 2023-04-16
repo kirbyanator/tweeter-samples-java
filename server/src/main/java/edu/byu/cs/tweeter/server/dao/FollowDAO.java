@@ -17,6 +17,7 @@ import edu.byu.cs.tweeter.server.dao.beans.UserBean;
 import edu.byu.cs.tweeter.server.dao.interfaces.DAOInterface;
 import edu.byu.cs.tweeter.server.dao.interfaces.FollowDAOInterface;
 import edu.byu.cs.tweeter.util.FakeData;
+import edu.byu.cs.tweeter.util.Pair;
 import software.amazon.awssdk.core.pagination.sync.SdkIterable;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbIndex;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
@@ -50,63 +51,27 @@ public class FollowDAO extends BaseDAO implements FollowDAOInterface {
         return getDummyFollowees().size();
     }
 
-    /**
-     * Gets the users from the database that the user specified in the request is following. Uses
-     * information in the request object to limit the number of followees returned and to return the
-     * next set of followees after any that were returned in a previous request. The current
-     * implementation returns generated data and doesn't actually access a database.
-     *
-     * @param request contains information about the user whose followees are to be returned and any
-     *                other information required to satisfy the request.
-     * @return the followees.
-     */
-    public FollowingResponse getFollowees(FollowingRequest request) {
+    public Pair<List<FollowBean>, Boolean> getFollowees(String followerAlias, int limit, String lastFolloweeAlias) {
         // TODO: Generates dummy data. Replace with a real implementation.
-        assert request.getLimit() > 0;
-        assert request.getFollowerAlias() != null;
+        assert limit > 0;
+        assert followerAlias != null;
 
-        List<User> allFollowees = getDummyFollowees();
-        List<User> responseFollowees = new ArrayList<>(request.getLimit());
+        DataPage<FollowBean> page = getPageOfFollowees(followerAlias, limit, lastFolloweeAlias);
+        boolean hasMorePages = page.isHasMorePages();
+        List<FollowBean> beanfollowees = page.getValues();
 
-        boolean hasMorePages = false;
-
-        if(request.getLimit() > 0) {
-            if (allFollowees != null) {
-                int followeesIndex = getUserStartingIndex(request.getLastFolloweeAlias(), allFollowees);
-
-                for(int limitCounter = 0; followeesIndex < allFollowees.size() && limitCounter < request.getLimit(); followeesIndex++, limitCounter++) {
-                    responseFollowees.add(allFollowees.get(followeesIndex));
-                }
-
-                hasMorePages = followeesIndex < allFollowees.size();
-            }
-        }
-
-        return new FollowingResponse(responseFollowees, hasMorePages);
+        return new Pair<>(beanfollowees, hasMorePages);
     }
 
-    public FollowersResponse getFollowers(FollowersRequest request) {
-        assert request.getLimit() > 0;
-        assert request.getFolloweeAlias() != null;
+    public Pair<List<FollowBean>, Boolean> getFollowers(String followeeAlias, int limit, String lastFollowerAlias) {
+        assert limit > 0;
+        assert followeeAlias != null;
 
-        List<User> allFollowers = getDummyFollowers();
-        List<User> responseFollowers = new ArrayList<>(request.getLimit());
+        DataPage<FollowBean> page = getPageOfFollowers(followeeAlias, limit, lastFollowerAlias);
+        boolean hasMorePages = page.isHasMorePages();
+        List<FollowBean> beanfollowees = page.getValues();
 
-        boolean hasMorePages = false;
-
-        if(request.getLimit() > 0) {
-            if (allFollowers != null) {
-                int followersIndex = getUserStartingIndex(request.getLastFollowerAlias(), allFollowers);
-
-                for(int limitCounter = 0; followersIndex < allFollowers.size() && limitCounter < request.getLimit(); followersIndex++, limitCounter++) {
-                    responseFollowers.add(allFollowers.get(followersIndex));
-                }
-
-                hasMorePages = followersIndex < allFollowers.size();
-            }
-        }
-
-        return new FollowersResponse(responseFollowers, hasMorePages);
+        return new Pair<>(beanfollowees, hasMorePages);
     }
 
     /**
@@ -254,7 +219,7 @@ public class FollowDAO extends BaseDAO implements FollowDAOInterface {
 
     @Override
     public void remove(String follower_handle, String followee_handle) {
-        DynamoDbTable<AuthTokenBean> table = getEnhancedClient().table(TableName, TableSchema.fromBean(AuthTokenBean.class));
+        DynamoDbTable<FollowBean> table = getEnhancedClient().table(TableName, TableSchema.fromBean(FollowBean.class));
         Key tablekey = Key.builder()
                 .partitionValue(follower_handle)
                 .sortValue(followee_handle)
