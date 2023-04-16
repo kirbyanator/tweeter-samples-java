@@ -8,6 +8,7 @@ import edu.byu.cs.tweeter.model.domain.AuthToken;
 import edu.byu.cs.tweeter.model.domain.User;
 import edu.byu.cs.tweeter.model.net.request.FollowRequest;
 import edu.byu.cs.tweeter.model.net.request.FollowersRequest;
+import edu.byu.cs.tweeter.model.net.request.IsFollowerRequest;
 import edu.byu.cs.tweeter.model.net.request.LoginRequest;
 import edu.byu.cs.tweeter.model.net.request.RegisterRequest;
 import edu.byu.cs.tweeter.model.net.request.UnfollowRequest;
@@ -15,6 +16,7 @@ import edu.byu.cs.tweeter.model.net.request.UserRequest;
 import edu.byu.cs.tweeter.model.net.response.AuthenticationResponse;
 import edu.byu.cs.tweeter.model.net.response.FollowResponse;
 import edu.byu.cs.tweeter.model.net.response.FollowersResponse;
+import edu.byu.cs.tweeter.model.net.response.IsFollowerResponse;
 import edu.byu.cs.tweeter.model.net.response.UnfollowResponse;
 import edu.byu.cs.tweeter.model.net.response.UserResponse;
 import edu.byu.cs.tweeter.server.dao.UserDAO;
@@ -50,14 +52,14 @@ public class MyTests {
         token = regres.getAuthToken();
 
         for(int i = 0; i < 20; ++i){
-            UserBean user = new UserBean("userfirst" + i, "userlast" + i, "@follower" + i, "https://davisdatabucket.s3.us-east-2.amazonaws.com/@davis", "davis", 0, 0);
+            UserBean user = new UserBean("userfirst" + i, "userlast" + i, "@davisfollower" + i, "https://davisdatabucket.s3.us-east-2.amazonaws.com/@davis", "davis", 0, 0);
             userDAO.put(user);
             FollowRequest frequest = new FollowRequest(token, user.getAlias(), davisUser.getAlias());
             followService.follow(frequest);
         }
 
         for(int i = 0; i < 15; ++i){
-            UserBean user = new UserBean("userfirst" + i, "userlast" + i, "@followee" + i, "https://davisdatabucket.s3.us-east-2.amazonaws.com/@davis", "davis", 0, 0);
+            UserBean user = new UserBean("userfirst" + i, "userlast" + i, "@davisfollowee" + i, "https://davisdatabucket.s3.us-east-2.amazonaws.com/@davis", "davis", 0, 0);
             userDAO.put(user);
             FollowRequest frequest = new FollowRequest(token, davisUser.getAlias(), user.getAlias());
             followService.follow(frequest);
@@ -107,5 +109,14 @@ public class MyTests {
         FollowersRequest request = new FollowersRequest(token, "@davis", 10, null);
         FollowersResponse response = followService.getFollowers(request);
         Assertions.assertTrue(response.isSuccess());
+    }
+
+    @Test
+    public void IsFollowerTest(){
+        populateTables();
+        FollowService service = new FollowService();
+        IsFollowerRequest req = new IsFollowerRequest(token, "@davisfollower1", "@davis");
+        IsFollowerResponse res = service.isFollower(req);
+        Assertions.assertTrue(res.getIsFollower());
     }
 }

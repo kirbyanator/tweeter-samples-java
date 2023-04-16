@@ -21,7 +21,7 @@ public abstract class Service {
             throw new RuntimeException("[Bad Request] AuthToken not valid");
         }
         long timeDif = System.currentTimeMillis() - token.getTimestamp();
-        if(timeDif > 800000){
+        if(timeDif > 3600000){
             throw new RuntimeException("[Bad Request] AuthToken not valid");
         }
 

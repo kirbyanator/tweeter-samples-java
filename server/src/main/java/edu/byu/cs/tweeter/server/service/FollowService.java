@@ -200,7 +200,20 @@ public class FollowService extends Service{
         if(request.getFollowerAlias() == null){
             throw new RuntimeException("[Bad Request] Request needs to have a follower alias");
         }
-        return new IsFollowerResponse(new Random().nextInt() > 0);
+        FollowDAO followDAO = factory.getFollowDAO();
+        try{
+            authenticateToken(request.getAuthToken());
+            FollowBean relationship = followDAO.get(request.getFollowerAlias(), request.getFolloweeAlias());
+            if(relationship == null){
+                return new IsFollowerResponse(false);
+            }
+            else{
+                return new IsFollowerResponse(true);
+            }
+        }
+        catch(Exception e){
+            return new IsFollowerResponse(e.getMessage());
+        }
     }
 
 
