@@ -29,7 +29,6 @@ public class UserService extends Service{
         } else if(request.getPassword() == null) {
             throw new RuntimeException("[Bad Request] Missing a password");
         }
-
         // TODO: Generates dummy data. Replace with a real implementation.
 
         try{
@@ -73,8 +72,9 @@ public class UserService extends Service{
         }
         //User user = getFakeData().findUserByAlias(request.getUserAliasStr());
         UserDAO userDAO = factory.getUserDAO();
-        authenticateToken(request.getAuthToken());
+
         try {
+            authenticateToken(request.getAuthToken());
             UserBean userEntry = userDAO.get(request.getUserAliasStr());
             User user = new User(userEntry.getFirstName(), userEntry.getLastName(), userEntry.getAlias(), userEntry.getImageUrl());
             return new UserResponse(user);
@@ -123,13 +123,18 @@ public class UserService extends Service{
         try{
             String imageLink = userDAO.uploadImage(request.getImage(), request.getUsername());
 
-            UserBean userEntry = new UserBean(request.getFirstName(), request.getLastName(), request.getUsername(), imageLink, hashedPassword, 0, 0);
             User registeredUser = new User(request.getFirstName(), request.getLastName(), request.getUsername(), imageLink);
             AuthToken authToken = new AuthToken(generateNewToken(),System.currentTimeMillis());
 
+            UserBean userEntry = new UserBean(request.getFirstName(), request.getLastName(), request.getUsername(), imageLink, hashedPassword, 0, 0);
+            if(userDAO.get(request.getUsername()) != null){
+                return new AuthenticationResponse("User already registered!");
+            }
             userDAO.put(userEntry);
+
             AuthTokenBean tokenEntry = new AuthTokenBean(request.getUsername(),authToken.token ,authToken.getTimestamp());
             authDAO.put(tokenEntry);
+
             return new AuthenticationResponse(registeredUser, authToken);
         }
         catch(Exception e){

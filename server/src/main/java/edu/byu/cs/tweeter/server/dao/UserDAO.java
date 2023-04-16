@@ -63,7 +63,11 @@ public class UserDAO extends BaseDAO implements DAOInterface<UserBean> {
 
     @Override
     public void update(UserBean item) {
-
+        if(get(item.getAlias()) == null){
+            throw new RuntimeException("[Bad Request], User does not exist in database");
+        }
+        DynamoDbTable<UserBean> table = getEnhancedClient().table(TableName, TableSchema.fromBean(UserBean.class));
+        table.putItem(item);
     }
 
 

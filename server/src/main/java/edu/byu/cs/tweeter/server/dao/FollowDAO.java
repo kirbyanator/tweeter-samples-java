@@ -1,19 +1,41 @@
 package edu.byu.cs.tweeter.server.dao;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import edu.byu.cs.tweeter.model.domain.Follow;
 import edu.byu.cs.tweeter.model.domain.User;
 import edu.byu.cs.tweeter.model.net.request.FollowersRequest;
 import edu.byu.cs.tweeter.model.net.request.FollowingRequest;
 import edu.byu.cs.tweeter.model.net.response.FollowersResponse;
 import edu.byu.cs.tweeter.model.net.response.FollowingResponse;
+import edu.byu.cs.tweeter.server.dao.beans.AuthTokenBean;
+import edu.byu.cs.tweeter.server.dao.beans.FollowBean;
+import edu.byu.cs.tweeter.server.dao.beans.UserBean;
+import edu.byu.cs.tweeter.server.dao.interfaces.DAOInterface;
+import edu.byu.cs.tweeter.server.dao.interfaces.FollowDAOInterface;
 import edu.byu.cs.tweeter.util.FakeData;
+import software.amazon.awssdk.core.pagination.sync.SdkIterable;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbIndex;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
+import software.amazon.awssdk.enhanced.dynamodb.Key;
+import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
+import software.amazon.awssdk.enhanced.dynamodb.model.Page;
+import software.amazon.awssdk.enhanced.dynamodb.model.PageIterable;
+import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
+import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
+import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
 /**
  * A DAO for accessing 'following' data from the database.
  */
-public class FollowDAO {
+public class FollowDAO extends BaseDAO implements FollowDAOInterface {
+
+    public static final String indexName = "follows_index";
+    private static final String TableName = "follows";
+
 
     /**
      * Gets the count of users from the database that the user specified is following. The
@@ -61,6 +83,30 @@ public class FollowDAO {
         }
 
         return new FollowingResponse(responseFollowees, hasMorePages);
+    }
+
+    public FollowersResponse getFollowers(FollowersRequest request) {
+        assert request.getLimit() > 0;
+        assert request.getFolloweeAlias() != null;
+
+        List<User> allFollowers = getDummyFollowers();
+        List<User> responseFollowers = new ArrayList<>(request.getLimit());
+
+        boolean hasMorePages = false;
+
+        if(request.getLimit() > 0) {
+            if (allFollowers != null) {
+                int followersIndex = getUserStartingIndex(request.getLastFollowerAlias(), allFollowers);
+
+                for(int limitCounter = 0; followersIndex < allFollowers.size() && limitCounter < request.getLimit(); followersIndex++, limitCounter++) {
+                    responseFollowers.add(allFollowers.get(followersIndex));
+                }
+
+                hasMorePages = followersIndex < allFollowers.size();
+            }
+        }
+
+        return new FollowersResponse(responseFollowers, hasMorePages);
     }
 
     /**
@@ -116,27 +162,108 @@ public class FollowDAO {
         return FakeData.getInstance();
     }
 
-    public FollowersResponse getFollowers(FollowersRequest request) {
-        assert request.getLimit() > 0;
-        assert request.getFolloweeAlias() != null;
 
-        List<User> allFollowers = getDummyFollowers();
-        List<User> responseFollowers = new ArrayList<>(request.getLimit());
+    public DataPage<FollowBean> getPageOfFollowees(String targetUserAlias, int pageSize, String lastUserAlias){
+        DynamoDbTable<FollowBean> table = getEnhancedClient().table(TableName, TableSchema.fromBean(FollowBean.class));
+        Key key = Key.builder()
+                .partitionValue(targetUserAlias)
+                .build();
+        QueryEnhancedRequest.Builder requestBuilder = QueryEnhancedRequest.builder()
+                .queryConditional(QueryConditional.keyEqualTo(key))
+                .limit(pageSize);
 
-        boolean hasMorePages = false;
+        if(isNonEmptyString(lastUserAlias)) {
+            // Build up the Exclusive Start Key (telling DynamoDB where you left off reading items)
+            Map<String, AttributeValue> startKey = new HashMap<>();
+            startKey.put("follower_handle", AttributeValue.builder().s(targetUserAlias).build());
+            startKey.put("followee_handle", AttributeValue.builder().s(lastUserAlias).build());
 
-        if(request.getLimit() > 0) {
-            if (allFollowers != null) {
-                int followersIndex = getUserStartingIndex(request.getLastFollowerAlias(), allFollowers);
-
-                for(int limitCounter = 0; followersIndex < allFollowers.size() && limitCounter < request.getLimit(); followersIndex++, limitCounter++) {
-                    responseFollowers.add(allFollowers.get(followersIndex));
-                }
-
-                hasMorePages = followersIndex < allFollowers.size();
-            }
+            requestBuilder.exclusiveStartKey(startKey);
         }
 
-        return new FollowersResponse(responseFollowers, hasMorePages);
+        QueryEnhancedRequest request = requestBuilder.build();
+
+        DataPage<FollowBean> result = new DataPage<FollowBean>();
+
+        PageIterable<FollowBean> pages = table.query(request);
+        pages.stream()
+                .limit(1)
+                .forEach((Page<FollowBean> page) -> {
+                    result.setHasMorePages(page.lastEvaluatedKey() != null);
+                    page.items().forEach(followers -> result.getValues().add(followers));
+                });
+
+        return result;
+    }
+
+    public DataPage<FollowBean> getPageOfFollowers(String targetUserAlias, int pageSize, String lastUserAlias) {
+        DynamoDbIndex<FollowBean> index = getEnhancedClient().table(TableName, TableSchema.fromBean(FollowBean.class)).index(indexName);
+        Key key = Key.builder()
+                .partitionValue(targetUserAlias)
+                .build();
+
+        QueryEnhancedRequest.Builder requestBuilder = QueryEnhancedRequest.builder()
+                .queryConditional(QueryConditional.keyEqualTo(key))
+                .limit(pageSize);
+
+        if(isNonEmptyString(lastUserAlias)) {
+            // Build up the Exclusive Start Key (telling DynamoDB where you left off reading items)
+            Map<String, AttributeValue> startKey = new HashMap<>();
+            startKey.put("followee_handle", AttributeValue.builder().s(targetUserAlias).build());
+            startKey.put("follower_handle", AttributeValue.builder().s(lastUserAlias).build());
+
+            requestBuilder.exclusiveStartKey(startKey);
+        }
+
+        QueryEnhancedRequest request = requestBuilder.build();
+
+        DataPage<FollowBean> result = new DataPage<FollowBean>();
+
+        SdkIterable<Page<FollowBean>> sdkIterable = index.query(request);
+        PageIterable<FollowBean> pages = PageIterable.create(sdkIterable);
+        pages.stream()
+                .limit(1)
+                .forEach((Page<FollowBean> page) -> {
+                    result.setHasMorePages(page.lastEvaluatedKey() != null);
+                    page.items().forEach(followees -> result.getValues().add(followees));
+                });
+
+        return result;
+    }
+
+    private static boolean isNonEmptyString(String value) {
+        return (value != null && value.length() > 0);
+    }
+
+    @Override
+    public void put(FollowBean item) {
+        DynamoDbTable<FollowBean> table = getEnhancedClient().table(TableName, TableSchema.fromBean(FollowBean.class));
+        table.putItem(item);
+    }
+
+    @Override
+    public FollowBean get(String follower_handle, String followee_handle) {
+        DynamoDbTable<FollowBean> table = getEnhancedClient().table(TableName, TableSchema.fromBean(FollowBean.class));
+        Key tablekey = Key.builder()
+                .partitionValue(follower_handle)
+                .sortValue(followee_handle)
+                .build();
+        FollowBean entry = table.getItem(tablekey);
+        return entry;
+    }
+
+    @Override
+    public void remove(String follower_handle, String followee_handle) {
+        DynamoDbTable<AuthTokenBean> table = getEnhancedClient().table(TableName, TableSchema.fromBean(AuthTokenBean.class));
+        Key tablekey = Key.builder()
+                .partitionValue(follower_handle)
+                .sortValue(followee_handle)
+                .build();
+        table.deleteItem(tablekey);
+    }
+
+    @Override
+    public void update(FollowBean item) {
+
     }
 }

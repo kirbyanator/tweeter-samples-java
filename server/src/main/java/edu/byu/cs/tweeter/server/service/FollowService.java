@@ -2,6 +2,7 @@ package edu.byu.cs.tweeter.server.service;
 
 import java.util.Random;
 
+import edu.byu.cs.tweeter.model.domain.User;
 import edu.byu.cs.tweeter.model.net.request.FollowRequest;
 import edu.byu.cs.tweeter.model.net.request.FollowersCountRequest;
 import edu.byu.cs.tweeter.model.net.request.FollowersRequest;
@@ -16,6 +17,9 @@ import edu.byu.cs.tweeter.model.net.response.FollowingResponse;
 import edu.byu.cs.tweeter.model.net.response.IsFollowerResponse;
 import edu.byu.cs.tweeter.model.net.response.UnfollowResponse;
 import edu.byu.cs.tweeter.server.dao.FollowDAO;
+import edu.byu.cs.tweeter.server.dao.UserDAO;
+import edu.byu.cs.tweeter.server.dao.beans.FollowBean;
+import edu.byu.cs.tweeter.server.dao.beans.UserBean;
 
 /**
  * Contains the business logic for getting the users a user is following.
@@ -44,6 +48,38 @@ public class FollowService extends Service{
         if(request.getFolloweeAlias() == null){
             throw new RuntimeException("[Bad Request] Request needs to have a followee alias");
         }
+        if(request.getFollowerAlias() == null){
+            throw new RuntimeException("[Bad Request] Request needs to have a follower alias");
+        }
+
+        FollowDAO followDAO = factory.getFollowDAO();
+        UserDAO userDAO = factory.getUserDAO();
+
+        try{
+            authenticateToken(request.getAuthToken());
+
+            UserBean follower = userDAO.get(request.getFollowerAlias());
+            UserBean followee = userDAO.get(request.getFolloweeAlias());
+
+            if(followDAO.get(follower.getAlias(), followee.getAlias()) != null){
+                return new FollowResponse("You are already following this user");
+            }
+
+            FollowBean newRelationship = new FollowBean(follower.getAlias(), follower.getFirstName() + " " + follower.getLastName(),
+                    followee.getAlias(), followee.getFirstName() + " " + followee.getLastName());
+
+            followDAO.put(newRelationship);
+
+            follower.setFolloweeCount(follower.getFolloweeCount() + 1);
+            followee.setFollowerCount(followee.getFollowerCount() + 1);
+
+            userDAO.update(follower);
+            userDAO.update(followee);
+        }
+        catch(Exception e){
+            return new FollowResponse(e.getMessage());
+        }
+
         return new FollowResponse();
     }
 
@@ -58,42 +94,85 @@ public class FollowService extends Service{
         return new FollowDAO();
     }
 
-    public CountResponse getFollowerCount(FollowersCountRequest input) {
-        if(input.getTargetUserAlias() == null){
+    public CountResponse getFollowerCount(FollowersCountRequest request) {
+        if(request.getTargetUserAlias() == null){
             throw new RuntimeException("[Bad Request] Request needs a user alias");
         }
-        return new CountResponse(20);
+        UserDAO userDAO = factory.getUserDAO();
+
+        try {
+            authenticateToken(request.getAuthToken());
+            UserBean user = userDAO.get(request.getTargetUserAlias());
+            return new CountResponse(user.getFollowerCount());
+        }
+        catch(Exception e){
+            return new CountResponse(e.getMessage());
+        }
     }
 
-    public CountResponse getFollowingCount(FollowingCountRequest input) {
-        if(input.getTargetUserAlias() == null){
+    public CountResponse getFollowingCount(FollowingCountRequest request) {
+        if(request.getTargetUserAlias() == null){
             throw new RuntimeException("[Bad Request] Request needs a user alias");
         }
-        return new CountResponse(20);
+        UserDAO userDAO = factory.getUserDAO();
+
+        try {
+            authenticateToken(request.getAuthToken());
+            UserBean user = userDAO.get(request.getTargetUserAlias());
+            return new CountResponse(user.getFollowerCount());
+        }
+        catch(Exception e){
+            return new CountResponse(e.getMessage());
+        }
     }
 
-    public FollowersResponse getFollowers(FollowersRequest input) {
-        if(input.getFolloweeAlias() == null) {
+    public FollowersResponse getFollowers(FollowersRequest request) {
+        if(request.getFolloweeAlias() == null) {
             throw new RuntimeException("[Bad Request] Request needs to have a follower alias");
-        } else if(input.getLimit() <= 0) {
+        } else if(request.getLimit() <= 0) {
             throw new RuntimeException("[Bad Request] Request needs to have a positive limit");
         }
-        return getFollowingDAO().getFollowers(input);
+        return getFollowingDAO().getFollowers(request);
     }
 
-    public IsFollowerResponse isFollower(IsFollowerRequest input) {
-        if(input.getFolloweeAlias() == null){
+    public IsFollowerResponse isFollower(IsFollowerRequest request) {
+        if(request.getFolloweeAlias() == null){
             throw new RuntimeException("[Bad Request] Request needs to have a followee alias");
         }
-        if(input.getFollowerAlias() == null){
+        if(request.getFollowerAlias() == null){
             throw new RuntimeException("[Bad Request] Request needs to have a follower alias");
         }
         return new IsFollowerResponse(new Random().nextInt() > 0);
     }
 
-    public UnfollowResponse unfollow(UnfollowRequest input) {
-        if(input.getFolloweeAlias() == null){
+    public UnfollowResponse unfollow(UnfollowRequest request) {
+        if(request.getFolloweeAlias() == null){
             throw new RuntimeException("[Bad Request] Request needs to have a followee alias");
+        }
+        FollowDAO followDAO = factory.getFollowDAO();
+        UserDAO userDAO = factory.getUserDAO();
+
+        try{
+            authenticateToken(request.getAuthToken());
+
+            UserBean follower = userDAO.get(request.getFollowerAlias());
+            UserBean followee = userDAO.get(request.getFolloweeAlias());
+
+            if(followDAO.get(follower.getAlias(), followee.getAlias()) == null){
+                return new UnfollowResponse("You are already not following this user");
+            }
+
+            followDAO.remove(follower.getAlias(), followee.getAlias());
+
+            follower.setFolloweeCount(follower.getFolloweeCount() - 1);
+            followee.setFollowerCount(followee.getFollowerCount() - 1);
+
+            userDAO.update(follower);
+            userDAO.update(followee);
+
+        }
+        catch(Exception e){
+            return new UnfollowResponse(e.getMessage());
         }
         return new UnfollowResponse();
     }

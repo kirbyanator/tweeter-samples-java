@@ -8,13 +8,23 @@ import edu.byu.cs.tweeter.model.domain.AuthToken;
 public class FollowRequest {
 
     private AuthToken authToken;
+    private String followerAlias;
     private String followeeAlias;
 
     private FollowRequest() {}
 
-    public FollowRequest(AuthToken authToken, String followeeAlias) {
+    public FollowRequest(AuthToken authToken, String followerAlias, String followeeAlias) {
         this.authToken = authToken;
+        this.followerAlias = followerAlias;
         this.followeeAlias = followeeAlias;
+    }
+
+    public String getFollowerAlias() {
+        return followerAlias;
+    }
+
+    public void setFollowerAlias(String followerAlias) {
+        this.followerAlias = followerAlias;
     }
 
     public AuthToken getAuthToken() {
