@@ -152,7 +152,7 @@ public class UserService extends Service{
         return base64Encoder.encodeToString(randomBytes);
     }
 
-    private static String hashPassword(String passwordToHash) {
+    public static String hashPassword(String passwordToHash) {
         try {
             MessageDigest md = MessageDigest.getInstance("MD5");
             md.update(passwordToHash.getBytes());

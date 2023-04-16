@@ -160,17 +160,6 @@ public class FollowService extends Service{
         return new UnfollowResponse();
     }
 
-    /**
-     * Returns an instance of {@link FollowDAO}. Allows mocking of the FollowDAO class
-     * for testing purposes. All usages of FollowDAO should get their FollowDAO
-     * instance from this method to allow for mocking of the instance.
-     *
-     * @return the instance.
-     */
-    FollowDAO getFollowingDAO() {
-        return new FollowDAO();
-    }
-
     public CountResponse getFollowerCount(FollowersCountRequest request) {
         if(request.getTargetUserAlias() == null){
             throw new RuntimeException("[Bad Request] Request needs a user alias");
@@ -196,7 +185,7 @@ public class FollowService extends Service{
         try {
             authenticateToken(request.getAuthToken());
             UserBean user = userDAO.get(request.getTargetUserAlias());
-            return new CountResponse(user.getFollowerCount());
+            return new CountResponse(user.getFolloweeCount());
         }
         catch(Exception e){
             return new CountResponse(e.getMessage());
