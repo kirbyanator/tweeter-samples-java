@@ -12,8 +12,12 @@ public class DAOFactory implements DAOFactoryInterface {
         return new AuthTokenDAO();
     }
 
-    public StatusDAO getStatusDAO(){
-        return new StatusDAO();
+    public FeedDAO getFeedDAO(){
+        return new FeedDAO();
+    }
+
+    public StoryDAO getStoryDAO(){
+        return new StoryDAO();
     }
 
     public FollowDAO getFollowDAO(){

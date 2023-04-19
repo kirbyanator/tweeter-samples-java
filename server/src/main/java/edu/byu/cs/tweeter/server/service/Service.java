@@ -4,9 +4,11 @@ import java.security.SecureRandom;
 import java.util.Base64;
 
 import edu.byu.cs.tweeter.model.domain.AuthToken;
+import edu.byu.cs.tweeter.model.domain.User;
 import edu.byu.cs.tweeter.server.dao.AuthTokenDAO;
 import edu.byu.cs.tweeter.server.dao.DAOFactory;
 import edu.byu.cs.tweeter.server.dao.beans.AuthTokenBean;
+import edu.byu.cs.tweeter.server.dao.beans.UserBean;
 
 public abstract class Service {
     protected final DAOFactory factory = new DAOFactory();
@@ -28,5 +30,11 @@ public abstract class Service {
         resultBean.setTimestamp(System.currentTimeMillis());
         tokenDAO.update(resultBean);
 
+    }
+
+    protected User convertUserBean(UserBean userBean) {
+        User user = new User(userBean.getFirstName(),userBean.getLastName(),
+                userBean.getAlias(),userBean.getImageUrl());
+        return user;
     }
 }
