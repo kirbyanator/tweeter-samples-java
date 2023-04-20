@@ -17,7 +17,7 @@ import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 
 public class UserDAO extends BaseDAO implements DAOInterface<UserBean> {
 
-    private static final String TableName = "users";
+    private static final String table = "users";
 
     public String uploadImage(String image, String alias){
         AmazonS3 s3 = AmazonS3ClientBuilder
@@ -42,13 +42,13 @@ public class UserDAO extends BaseDAO implements DAOInterface<UserBean> {
 
     @Override
     public void put(UserBean item){
-        DynamoDbTable<UserBean> table = getEnhancedClient().table(TableName, TableSchema.fromBean(UserBean.class));
+        DynamoDbTable<UserBean> table = getEnhancedClient().table(UserDAO.table, TableSchema.fromBean(UserBean.class));
         table.putItem(item);
     }
 
     @Override
     public UserBean get(String key) {
-        DynamoDbTable<UserBean> table = getEnhancedClient().table(TableName, TableSchema.fromBean(UserBean.class));
+        DynamoDbTable<UserBean> table = getEnhancedClient().table(UserDAO.table, TableSchema.fromBean(UserBean.class));
         Key tablekey = Key.builder()
                 .partitionValue(key)
                 .build();
@@ -66,7 +66,7 @@ public class UserDAO extends BaseDAO implements DAOInterface<UserBean> {
         if(get(item.getAlias()) == null){
             throw new RuntimeException("[Bad Request], User does not exist in database");
         }
-        DynamoDbTable<UserBean> table = getEnhancedClient().table(TableName, TableSchema.fromBean(UserBean.class));
+        DynamoDbTable<UserBean> table = getEnhancedClient().table(UserDAO.table, TableSchema.fromBean(UserBean.class));
         table.putItem(item);
     }
 

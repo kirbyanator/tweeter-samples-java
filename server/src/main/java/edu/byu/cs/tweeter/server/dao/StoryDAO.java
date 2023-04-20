@@ -15,23 +15,23 @@ import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
 public class StoryDAO extends PageDAO<StoryBean> implements StoryDAOInterface {
 
-    private static final String TableName = "story";
+    private static final String table = "story";
 
-    private static final String UserAliasAttr = "userAlias";
-    private static final String TimeStampAttr = "timestamp";
+    private static final String partition = "userAlias";
+    private static final String sort = "timestamp";
 
     @Override
     protected DynamoDbTable<StoryBean> getTable() {
-        return getEnhancedClient().table(TableName, TableSchema.fromBean(StoryBean.class));
+        return getEnhancedClient().table(table, TableSchema.fromBean(StoryBean.class));
     }
 
     @Override
-    protected void checkForPaging(StoryBean lastItem, String targetUserAlias, QueryEnhancedRequest.Builder requestBuilder) {
+    protected void findStartingIndex(StoryBean lastItem, String targetUserAlias, QueryEnhancedRequest.Builder requestBuilder) {
         if(lastItem != null) {
             // Build up the Exclusive Start Key (telling DynamoDB where you left off reading items)
             Map<String, AttributeValue> startKey = new HashMap<>();
-            startKey.put(UserAliasAttr, AttributeValue.builder().s(targetUserAlias).build());
-            startKey.put(TimeStampAttr, AttributeValue.builder().n(Long.toString(lastItem.getTimestamp())).build());
+            startKey.put(partition, AttributeValue.builder().s(targetUserAlias).build());
+            startKey.put(sort, AttributeValue.builder().n(Long.toString(lastItem.getTimestamp())).build());
 
             requestBuilder.exclusiveStartKey(startKey);
         }
@@ -48,7 +48,7 @@ public class StoryDAO extends PageDAO<StoryBean> implements StoryDAOInterface {
 
     @Override
     public void postStatus(StoryBean status) {
-        DynamoDbTable<StoryBean> table = getEnhancedClient().table(TableName,
+        DynamoDbTable<StoryBean> table = getEnhancedClient().table(StoryDAO.table,
                 TableSchema.fromBean(StoryBean.class));
         Key key = Key.builder()
                 .partitionValue(status.getUserAlias()).sortValue(status.getTimestamp())
@@ -64,7 +64,7 @@ public class StoryDAO extends PageDAO<StoryBean> implements StoryDAOInterface {
 
     @Override
     public boolean update(StoryBean status) {
-        DynamoDbTable<StoryBean> table = getEnhancedClient().table(TableName,TableSchema.fromBean(StoryBean.class));
+        DynamoDbTable<StoryBean> table = getEnhancedClient().table(StoryDAO.table,TableSchema.fromBean(StoryBean.class));
         Key key = Key.builder()
                 .partitionValue(status.getUserAlias()).sortValue(status.getTimestamp())
                 .build();

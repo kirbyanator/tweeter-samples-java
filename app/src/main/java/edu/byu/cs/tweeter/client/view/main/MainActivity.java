@@ -165,6 +165,7 @@ public class MainActivity extends AppCompatActivity implements StatusDialogFragm
     @Override
     public void onStatusPosted(String post) {
         try {
+            this.displayMessage("Posting status...");
             presenter.postStatus(post);
         } catch (Exception ex) {
             Log.e(LOG_TAG, ex.getMessage(), ex);

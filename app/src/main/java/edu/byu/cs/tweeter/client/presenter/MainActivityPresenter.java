@@ -141,7 +141,6 @@ public class MainActivityPresenter extends Presenter<MainView> {
     }
 
     public void postStatus(String post) {
-        view.displayMessage("Posting status...");
         Status newStatus = new Status(post, Cache.getInstance().getCurrUser(), System.currentTimeMillis(), parseURLs(post), parseMentions(post));
         statusServiceFactory().postStatus(newStatus, new PostStatusObserver(this));
     }

@@ -1,20 +1,11 @@
 package edu.byu.cs.tweeter.server.dao;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import edu.byu.cs.tweeter.model.domain.Follow;
 import edu.byu.cs.tweeter.model.domain.User;
-import edu.byu.cs.tweeter.model.net.request.FollowersRequest;
-import edu.byu.cs.tweeter.model.net.request.FollowingRequest;
-import edu.byu.cs.tweeter.model.net.response.FollowersResponse;
-import edu.byu.cs.tweeter.model.net.response.FollowingResponse;
-import edu.byu.cs.tweeter.server.dao.beans.AuthTokenBean;
 import edu.byu.cs.tweeter.server.dao.beans.FollowBean;
-import edu.byu.cs.tweeter.server.dao.beans.UserBean;
-import edu.byu.cs.tweeter.server.dao.interfaces.DAOInterface;
 import edu.byu.cs.tweeter.server.dao.interfaces.FollowDAOInterface;
 import edu.byu.cs.tweeter.util.FakeData;
 import edu.byu.cs.tweeter.util.Pair;
@@ -35,7 +26,7 @@ import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 public class FollowDAO extends BaseDAO implements FollowDAOInterface {
 
     public static final String indexName = "follows_index";
-    private static final String TableName = "follows";
+    private static final String table = "follows";
 
 
     /**
@@ -129,7 +120,7 @@ public class FollowDAO extends BaseDAO implements FollowDAOInterface {
 
 
     public DataPage<FollowBean> getPageOfFollowees(String targetUserAlias, int pageSize, String lastUserAlias){
-        DynamoDbTable<FollowBean> table = getEnhancedClient().table(TableName, TableSchema.fromBean(FollowBean.class));
+        DynamoDbTable<FollowBean> table = getEnhancedClient().table(FollowDAO.table, TableSchema.fromBean(FollowBean.class));
         Key key = Key.builder()
                 .partitionValue(targetUserAlias)
                 .build();
@@ -162,7 +153,7 @@ public class FollowDAO extends BaseDAO implements FollowDAOInterface {
     }
 
     public DataPage<FollowBean> getPageOfFollowers(String targetUserAlias, int pageSize, String lastUserAlias) {
-        DynamoDbIndex<FollowBean> index = getEnhancedClient().table(TableName, TableSchema.fromBean(FollowBean.class)).index(indexName);
+        DynamoDbIndex<FollowBean> index = getEnhancedClient().table(table, TableSchema.fromBean(FollowBean.class)).index(indexName);
         Key key = Key.builder()
                 .partitionValue(targetUserAlias)
                 .build();
@@ -202,13 +193,13 @@ public class FollowDAO extends BaseDAO implements FollowDAOInterface {
 
     @Override
     public void put(FollowBean item) {
-        DynamoDbTable<FollowBean> table = getEnhancedClient().table(TableName, TableSchema.fromBean(FollowBean.class));
+        DynamoDbTable<FollowBean> table = getEnhancedClient().table(FollowDAO.table, TableSchema.fromBean(FollowBean.class));
         table.putItem(item);
     }
 
     @Override
     public FollowBean get(String follower_handle, String followee_handle) {
-        DynamoDbTable<FollowBean> table = getEnhancedClient().table(TableName, TableSchema.fromBean(FollowBean.class));
+        DynamoDbTable<FollowBean> table = getEnhancedClient().table(FollowDAO.table, TableSchema.fromBean(FollowBean.class));
         Key tablekey = Key.builder()
                 .partitionValue(follower_handle)
                 .sortValue(followee_handle)
@@ -219,7 +210,7 @@ public class FollowDAO extends BaseDAO implements FollowDAOInterface {
 
     @Override
     public void remove(String follower_handle, String followee_handle) {
-        DynamoDbTable<FollowBean> table = getEnhancedClient().table(TableName, TableSchema.fromBean(FollowBean.class));
+        DynamoDbTable<FollowBean> table = getEnhancedClient().table(FollowDAO.table, TableSchema.fromBean(FollowBean.class));
         Key tablekey = Key.builder()
                 .partitionValue(follower_handle)
                 .sortValue(followee_handle)

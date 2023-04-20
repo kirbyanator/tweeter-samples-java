@@ -34,9 +34,9 @@ public class StatusService extends Service {
         try{
             authenticateToken(request.getAuthToken());
             Pair<List<FeedBean>,Boolean> result = feedDAO.getFeed(request.getLimit(),
-                    request.getUserAlias(), convertStatusToFeedBean(request.getLastStatus(),
+                    request.getUserAlias(), statusToFeedBean(request.getLastStatus(),
                             request.getUserAlias()));
-            List<Status> feed = convertFeedBeanList(result.getFirst());
+            List<Status> feed = feedBeanToList(result.getFirst());
             return new FeedResponse(feed, result.getSecond());
         }
         catch(Exception e){
@@ -60,11 +60,11 @@ public class StatusService extends Service {
             authenticateToken(request.getAuthToken());
             StoryDAO storyDAO = factory.getStoryDAO();
             Pair<List<StoryBean>,Boolean> data = storyDAO.getStory(request.getLimit(),
-                    request.getUserAlias(),convertStatus(request.getLastStatus()));
+                    request.getUserAlias(), statusToBean(request.getLastStatus()));
             List<Status> statuses = new ArrayList<>();
 
             for(StoryBean storyBean:data.getFirst()){
-                statuses.add(convertStoryBeanToStatus(storyBean));
+                statuses.add(storyBeanToStatus(storyBean));
             }
 
             return new StoryResponse(statuses,data.getSecond());
@@ -107,7 +107,7 @@ public class StatusService extends Service {
 
             List<FeedBean> feedBeanList = new ArrayList<>();
             for(FollowBean followbean:followers){
-                FeedBean feedBean = convertStoryBeanToFeedBean(storyItem,followbean.getFollower_handle());
+                FeedBean feedBean = storyBeanToFeedBean(storyItem,followbean.getFollower_handle());
                 feedBeanList.add(feedBean);
             }
             for(FeedBean feedBean:feedBeanList){
@@ -122,7 +122,7 @@ public class StatusService extends Service {
         return new PostStatusResponse();
     }
 
-    public Status convertStoryBeanToStatus(StoryBean storyBean) {
+    public Status storyBeanToStatus(StoryBean storyBean) {
         UserDAO userDAO = factory.getUserDAO();
         User user = null;
         try{
@@ -137,22 +137,22 @@ public class StatusService extends Service {
         return status;
     }
 
-    public StoryBean convertStatus(Status status){
+    public StoryBean statusToBean(Status status){
         if(status == null){
             return null;
         }
         StoryBean storyBean = new StoryBean(status.user.getAlias(),
-                status.timestamp,status.urls,status.mentions,status.post);
+                status.getTimestamp(),status.urls,status.mentions,status.post);
         return storyBean;
     }
 
-    public FeedBean convertStoryBeanToFeedBean(StoryBean storyBean, String ownerAlias){
+    public FeedBean storyBeanToFeedBean(StoryBean storyBean, String ownerAlias){
         FeedBean feedBean = new FeedBean(ownerAlias,storyBean.getTimestamp(),storyBean.getUserAlias(),
                 storyBean.getUrls(),storyBean.getMentions(),storyBean.getPost());
         return feedBean;
     }
 
-    public List<Status> convertFeedBeanList(List<FeedBean> feedBeanList){
+    public List<Status> feedBeanToList(List<FeedBean> feedBeanList){
         UserDAO userDAO = factory.getUserDAO();
         List<Status> feed = new ArrayList<>();
 
@@ -170,7 +170,7 @@ public class StatusService extends Service {
         return feed;
     }
 
-    public FeedBean convertStatusToFeedBean(Status status, String ownerAlias){
+    public FeedBean statusToFeedBean(Status status, String ownerAlias){
         if(status == null){
             return null;
         }

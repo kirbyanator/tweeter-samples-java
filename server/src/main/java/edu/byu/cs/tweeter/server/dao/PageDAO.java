@@ -19,7 +19,7 @@ public abstract class PageDAO<T> extends BaseDAO{
                 .queryConditional(QueryConditional.keyEqualTo(key))
                 .limit(pageSize).scanIndexForward(false);
 
-        checkForPaging(lastItem,targetUserAlias,requestBuilder);
+        findStartingIndex(lastItem,targetUserAlias,requestBuilder);
 
         QueryEnhancedRequest request = requestBuilder.build();
 
@@ -37,6 +37,6 @@ public abstract class PageDAO<T> extends BaseDAO{
 
     protected abstract DynamoDbTable<T> getTable();
 
-    protected abstract void checkForPaging(T lastItem, String targetUserAlias, QueryEnhancedRequest.Builder requestBuilder);
+    protected abstract void findStartingIndex(T lastItem, String targetUserAlias, QueryEnhancedRequest.Builder requestBuilder);
 
 }

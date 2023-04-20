@@ -15,23 +15,23 @@ import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
 public class FeedDAO extends PageDAO<FeedBean> implements FeedDAOInterface {
 
-    private static final String TableName = "feed";
+    private static final String table = "feed";
 
-    private static final String UserAliasAttr = "userAlias";
-    private static final String TimeStampAttr = "timestamp";
+    private static final String partition = "userAlias";
+    private static final String sort = "timestamp";
 
     @Override
     protected DynamoDbTable<FeedBean> getTable() {
-        return getEnhancedClient().table(TableName, TableSchema.fromBean(FeedBean.class));
+        return getEnhancedClient().table(table, TableSchema.fromBean(FeedBean.class));
     }
 
     @Override
-    protected void checkForPaging(FeedBean lastItem, String targetUserAlias, QueryEnhancedRequest.Builder requestBuilder) {
+    protected void findStartingIndex(FeedBean lastItem, String targetUserAlias, QueryEnhancedRequest.Builder requestBuilder) {
         if(lastItem != null) {
             // Build up the Exclusive Start Key (telling DynamoDB where you left off reading items)
             Map<String, AttributeValue> startKey = new HashMap<>();
-            startKey.put(UserAliasAttr, AttributeValue.builder().s(targetUserAlias).build());
-            startKey.put(TimeStampAttr, AttributeValue.builder().n(Long.toString(lastItem.getTimestamp())).build());
+            startKey.put(partition, AttributeValue.builder().s(targetUserAlias).build());
+            startKey.put(sort, AttributeValue.builder().n(Long.toString(lastItem.getTimestamp())).build());
 
             requestBuilder.exclusiveStartKey(startKey);
         }
@@ -48,7 +48,7 @@ public class FeedDAO extends PageDAO<FeedBean> implements FeedDAOInterface {
 
     @Override
     public void addStatus(FeedBean feedBean) {
-        DynamoDbTable<FeedBean> table = getEnhancedClient().table(TableName,
+        DynamoDbTable<FeedBean> table = getEnhancedClient().table(FeedDAO.table,
                 TableSchema.fromBean(FeedBean.class));
         Key key = Key.builder()
                 .partitionValue(feedBean.getUserAlias()).sortValue(feedBean.getTimestamp())
